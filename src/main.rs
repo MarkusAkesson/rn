@@ -158,7 +158,7 @@ fn build(matches: &ArgMatches) -> Result<()> {
         .or_else(|| Some(cfg.get_directory()))
         .ok_or(RnError::BuildDirectory)?;
 
-    let command = Command::new("ninja")
+    Command::new("ninja")
         .arg(directory)
         .spawn()
         .expect("Failed to run ninja");
@@ -183,7 +183,7 @@ fn run(matches: &ArgMatches) -> Result<()> {
         .or_else(|| Some(cfg.get_directory()))
         .ok_or(RnError::BinaryArgsMissing)?;
 
-    let command = Command::new(bin)
+    Command::new(bin)
         .current_dir(directory)
         .arg(args)
         .spawn()
@@ -192,7 +192,7 @@ fn run(matches: &ArgMatches) -> Result<()> {
     Ok(())
 }
 
-fn print(matches: &ArgMatches) -> Result<()> {
+fn print(_matches: &ArgMatches) -> Result<()> {
     let cfg = Config::from_file()?;
     cfg.print();
     Ok(())
