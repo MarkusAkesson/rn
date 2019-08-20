@@ -98,6 +98,17 @@ fn main() {
                         .takes_value(true),
                 ),
         )
+        .subcommand(
+            SubCommand::with_name("clean")
+                .about("Clean up output directory")
+                .arg(
+                    Arg::with_name("directory")
+                        .long("directory")
+                        .takes_value(true)
+                        .value_name("DIRECTORY")
+                        .help("Path to directory with build script"),
+                ),
+        )
         .subcommand(SubCommand::with_name("print").about("Print the default config"))
         .get_matches();
     match run_subcommand(&matches) {
@@ -113,6 +124,7 @@ fn run_subcommand(matches: &ArgMatches) -> Result<()> {
         ("build", Some(build_matches)) => build(&build_matches)?,
         ("run", Some(run_matches)) => run(&run_matches)?,
         ("print", Some(run_matches)) => print(&run_matches)?,
+        ("clean", Some(run_matches)) => clean(&run_matches)?,
         _ => unreachable!(),
     }
     Ok(())
@@ -200,5 +212,23 @@ fn run(matches: &ArgMatches) -> Result<()> {
 fn print(_matches: &ArgMatches) -> Result<()> {
     let cfg = Config::from_file()?;
     cfg.print();
+    Ok(())
+}
+
+fn clean(matches: &ArgMatches) -> Result<()> {
+    let cfg = Config::from_file()?;
+    let directory = matches
+        .value_of("directory")
+        .or_else(|| Some(cfg.get_directory()))
+        .ok_or(RnError::BuildDirectory)?;
+
+    Command::new("gn")
+        .arg("clean")
+        .arg(directory)
+        .spawn()
+        .expect("Failed to run ninja")
+        .wait()
+        .expect("Failed to wait o build command");
+
     Ok(())
 }
