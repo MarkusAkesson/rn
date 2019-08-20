@@ -1,0 +1,4 @@
+---
+default_dir: out/Default
+default_bin: cat
+default_args: 1 2 3 --45
