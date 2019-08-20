@@ -3,7 +3,7 @@ use clap::{App, AppSettings, Arg, ArgMatches, SubCommand};
 use rn::config::Config;
 use rn::error::RnError;
 use std::path::Path;
-use std::process::Command;
+use std::process::{Command, Stdio};
 
 pub type Result<T, E = RnError> = std::result::Result<T, E>;
 
@@ -137,10 +137,7 @@ fn init(matches: &ArgMatches) -> Result<()> {
 
     let dir = matches.value_of("default-dir").unwrap();
     let bin = matches.value_of("default-bin").unwrap();
-    let args = match matches.value_of("default-args") {
-        Some(args) => args,
-        None => "",
-    };
+    let args = matches.value_of("default-args");
 
     let cfg = Config::new(dir, bin, args);
     cfg.save()?;
@@ -173,10 +170,12 @@ fn build(matches: &ArgMatches) -> Result<()> {
     Command::new("ninja")
         .arg("-C")
         .arg(directory)
+        .stdin(Stdio::inherit())
+        .stdout(Stdio::inherit())
         .spawn()
         .expect("Failed to run ninja")
         .wait()
-        .expect("Failed to wait o build command");
+        .expect("Failed while waiting for command to finish");
 
     Ok(())
 }
@@ -193,18 +192,21 @@ fn run(matches: &ArgMatches) -> Result<()> {
         .or_else(|| Some(cfg.get_binary()))
         .ok_or(RnError::BinaryMissing)?;
 
-    let args = matches
-        .value_of("directory")
-        .or_else(|| Some(cfg.get_directory()))
-        .ok_or(RnError::BinaryArgsMissing)?;
+    let bin_args = matches.value_of("args").or_else(|| cfg.get_args());
 
-    Command::new(bin)
-        .current_dir(directory)
-        .arg(args)
+    let mut cmd = Command::new(format!("./{}", bin));
+
+    if let Some(args) = bin_args {
+        cmd.arg(args);
+    }
+
+    cmd.current_dir(directory)
+        .stdin(Stdio::inherit())
+        .stdout(Stdio::inherit())
         .spawn()
-        .expect(format!("Failed to run the binary ({} {})", bin, args).as_str())
+        .expect("Failed to run the binary")
         .wait()
-        .expect("Failed to wait o build command");
+        .expect("Failed while waiting for command to finish");
 
     Ok(())
 }
@@ -225,10 +227,12 @@ fn clean(matches: &ArgMatches) -> Result<()> {
     Command::new("gn")
         .arg("clean")
         .arg(directory)
+        .stdin(Stdio::inherit())
+        .stdout(Stdio::inherit())
         .spawn()
-        .expect("Failed to run ninja")
+        .expect("Failed to run gn clean")
         .wait()
-        .expect("Failed to wait o build command");
+        .expect("Failed while waiting for command to finish");
 
     Ok(())
 }

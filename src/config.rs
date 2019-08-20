@@ -10,15 +10,20 @@ pub type Result<T, E = RnError> = std::result::Result<T, E>;
 pub struct Config {
     default_dir: String,
     default_bin: String,
-    default_args: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    default_args: Option<String>,
 }
 
 impl Config {
-    pub fn new(default_dir: &str, default_bin: &str, default_args: &str) -> Self {
+    pub fn new(default_dir: &str, default_bin: &str, default_args: Option<&str>) -> Self {
         Config {
             default_dir: String::from(default_dir),
             default_bin: String::from(default_bin),
-            default_args: String::from(default_args),
+            default_args: if let Some(args) = default_args {
+                Some(String::from(args))
+            } else {
+                None
+            },
         }
     }
 
@@ -56,8 +61,12 @@ impl Config {
         &self.default_bin
     }
 
-    pub fn get_args(&self) -> &str {
-        &self.default_args
+    pub fn get_args(&self) -> Option<&str> {
+        if let Some(args) = &self.default_args {
+            Some(&args)
+        } else {
+            None
+        }
     }
 
     pub fn update_directory(&mut self, dir: &str) {
@@ -69,6 +78,6 @@ impl Config {
     }
 
     pub fn update_args(&mut self, args: &str) {
-        self.default_args = String::from(args);
+        self.default_args = Some(String::from(args));
     }
 }
