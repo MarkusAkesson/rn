@@ -159,9 +159,12 @@ fn build(matches: &ArgMatches) -> Result<()> {
         .ok_or(RnError::BuildDirectory)?;
 
     Command::new("ninja")
+        .arg("-C")
         .arg(directory)
         .spawn()
-        .expect("Failed to run ninja");
+        .expect("Failed to run ninja")
+        .wait()
+        .expect("Failed to wait o build command");
 
     Ok(())
 }
@@ -187,7 +190,9 @@ fn run(matches: &ArgMatches) -> Result<()> {
         .current_dir(directory)
         .arg(args)
         .spawn()
-        .expect(format!("Failed to run the binary ({} {})", bin, args).as_str());
+        .expect(format!("Failed to run the binary ({} {})", bin, args).as_str())
+        .wait()
+        .expect("Failed to wait o build command");
 
     Ok(())
 }
