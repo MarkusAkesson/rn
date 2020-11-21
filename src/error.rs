@@ -18,4 +18,6 @@ pub enum RnError {
     BinaryMissing,
     #[snafu(display("Argmunents missing"))]
     BinaryArgsMissing,
+    #[snafu(display("Unknown subcommand"))]
+    UnknownSubcommand,
 }
